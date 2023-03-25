@@ -1,0 +1,42 @@
+version: '3'
+services:
+
+  nginx:
+    image: nginx:1.21.6-alpine 
+    container_name: moriyama-nginx
+    ports:
+      - 80:80 
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ../moriyama-svrapi:/var/www/moriyama-svrapi
+    working_dir: /var/www
+  db:
+    image: mysql:8.0.28
+    container_name: moriyama-db
+    environment: 
+      MYSQL_ROOT_PASSWORD: root_password_moriyama
+      MYSQL_DATABASE: moriyama_system
+      MYSQL_USER: user_moriyama
+      MYSQL_PASSWORD: password_moriyama
+      TZ: 'Asia/Tokyo' 
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+    volumes:  
+      - ./db/data:/var/lib/mysql
+      - ./db/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./db/sql:/docker-entrypoint-initdb.d
+    ports:
+      - 3306:3306
+
+  php:
+    container_name: moriyama-php
+    build: ./php
+    volumes:
+      - ../moriyama-svrapi:/var/www/moriyama-svrapi
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+    working_dir: /var/www/moriyama-svrapi
+
+  redis:
+    container_name: moriyama-redis
+    image: redis:6.2.6-alpine3.15
+    ports:
+      - 6379:6379
